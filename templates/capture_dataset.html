@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture Dataset</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100vh; /* Ensure footer sticks to the bottom */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        header, footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        nav {
+            text-align: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #fff;
+            margin: 0 10px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        form {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+
+        video {
+            display: block;
+            margin: 0 auto;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Capture Dataset</h1>
+    </header>
+
+    <nav>
+        <a href="/">Home</a>
+    </nav>
+
+    <div class="container">
+        <video id="videoElement" width="640" height="480" autoplay></video>
+        <canvas id="canvasElement" style="display:none;"></canvas>
+
+        <form id="captureForm" action="/capture_images" method="POST">
+            <label for="class_name">Class Name:</label>
+            <input type="text" id="class_name" name="class_name" required><br>
+            <label for="num_images">Number of Images to Capture:</label>
+            <input type="number" id="num_images" name="num_images" min="1" max="100" required><br>
+            <button type="button" onclick="captureAndSubmit()">Capture Images</button>
+        </form>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Real Time Sign Language Detection</p>
+    </footer>
+
+    <script>
+        // Get the video element and canvas element
+        const videoElement = document.getElementById('videoElement');
+        const canvasElement = document.getElementById('canvasElement');
+        const context = canvasElement.getContext('2d');
+
+        // Get user media (webcam)
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                videoElement.srcObject = stream;
+            })
+            .catch(function(err) {
+                console.log("Error accessing webcam: " + err);
+            });
+
+        // Function to capture images from video stream and submit the form
+        async function captureAndSubmit() {
+            const numImages = parseInt(document.getElementById("num_images").value);
+            const className = document.getElementById("class_name").value;
+
+            for (let i = 0; i < numImages; i++) {
+                // Draw video frame on canvas
+                context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+                // Convert canvas content to data URL
+                const imageData = canvasElement.toDataURL();
+
+                // Add an input field to the form with the image data
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "image[]";
+                input.value = imageData;
+                document.getElementById("captureForm").appendChild(input);
+
+                // Delay for a short time to allow next frame
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Submit the form
+            document.getElementById("captureForm").submit();
+        }
+    </script>
+</body>
+</html>
